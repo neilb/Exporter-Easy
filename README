@@ -1,0 +1,11 @@
+Eporter::Easy gets rid of the drudgery of exporting symbols allowing you to
+eliminate those bits of code that exists in every single module that uses
+Exporter.
+
+It also allows you to define tags in terms of other tags  and you no longer
+have to worry about filling in @EXPORT_OK.
+
+Exporter::Easiest lets you do even less typing, epxorting symbols can't get
+any easier than this!
+
+Written by Fergal Daly <fergal@esatclear.ie>
