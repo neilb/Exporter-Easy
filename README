@@ -36,7 +36,7 @@ use strict;
 
 use Exporter::Easy(
 	EXPORT => [qw(getservbyname getservbyport getservent getserv)],
-	OK => [qw( $s_name @s_aliases $s_port $s_proto ];
+	OK => [qw( $s_name @s_aliases $s_port $s_proto ]),
 	ALL => 'FIELDS',
 );
 

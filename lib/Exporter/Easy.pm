@@ -1,7 +1,7 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.17 2003/02/13 13:08:42 fergal Exp $
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.16 2003/02/13 02:19:12 fergal Exp $
 
-use strict;
-no strict 'refs';
+#use strict;
+#no strict 'refs';
 
 package Exporter::Easy;
 
@@ -11,7 +11,7 @@ require Exporter;
 
 use vars;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 sub import
 {
@@ -44,7 +44,7 @@ sub set_export_vars
 
 	if ($args{OK_ONLY} and $args{OK})
 	{
-		die "Can't use OK_ONLY and OK together in $callpkg";
+		nice_die("Can't use OK_ONLY and OK together");
 	}
 
 	my $isa = exists $args{ISA} ? delete $args{ISA} : 1;
@@ -57,7 +57,7 @@ sub set_export_vars
 
 	if (my $tag_data = delete $args{'TAGS'})
 	{
-		die "TAGS must be a reference to an array" unless ref($tag_data) eq 'ARRAY';
+		nice_die("TAGS must be a reference to an array") unless ref($tag_data) eq 'ARRAY';
 
 		add_tags($tag_data, \%tags);
 
@@ -66,10 +66,10 @@ sub set_export_vars
 
 	if (my $ok = delete $args{'OK'})
 	{
-		die "OK must be a reference to a array" unless ref($ok) eq 'ARRAY';
+		nice_die("OK must be a reference to a array") unless ref($ok) eq 'ARRAY';
 
 		my @ok = eval { expand_tags($ok, \%tags) };
-		die "$@while building the OK list in $callpkg" if $@;
+		nice_die("$@while building the \@EXPORT_OK") if $@;
 		@could_export{@ok} = ();
 	}
 
@@ -78,29 +78,27 @@ sub set_export_vars
 		die "FAIL must be a reference to an array" unless ref($fail) eq 'ARRAY';
 
 		@fail = eval { expand_tags($fail, \%tags) };
-		die "$@while building the FAIL list in $callpkg" if $@;
-
-		delete @could_export{@fail};
+		nice_die("$@while building \@EXPORT_FAIL") if $@;
 	}
 
 	my $ok_only = delete $args{'OK_ONLY'};
 	if ($ok_only)
 	{
-		die "OK_ONLY must be a reference to a array" unless ref($ok_only) eq 'ARRAY';
+		die("OK_ONLY must be a reference to a array") unless ref($ok_only) eq 'ARRAY';
 
 		@ok_only = eval { expand_tags($ok_only, \%tags) };
-		die "$@while building the OK_ONLY list in $callpkg" if $@;
+		nice_die("$@while building the OK_ONLY list") if $@;
 
 		@could_export{@ok_only} = ();
 	}
 
 	my @could_export = keys %could_export;
 
-	if (my $all = delete $args{'ALL'})
+	if (defined(my $all = delete $args{'ALL'}))
 	{
-		die "No name supplied for ALL" unless length($all);
+		nice_die("No name supplied for ALL") unless length($all);
 
-		die "Cannot use '$all' for ALL, already exists" if exists $tags{$all};
+		nice_die("Cannot use '$all' for ALL, already exists") if exists $tags{$all};
 
 		my %all;
 		@all{@could_export, @will_export} = ();
@@ -110,21 +108,21 @@ sub set_export_vars
 
 	if (my $export = delete $args{'EXPORT'})
 	{
-		die "EXPORT must be a reference to an array"
+		nice_die("EXPORT must be a reference to an array")
 			unless ref($export) eq 'ARRAY';
 		
 		@will_export = eval { expand_tags($export, \%tags) };
-		die "$@while building the EXPORT list in $callpkg" if $@;
+		nice_die("$@while building the EXPORT list in $callpkg") if $@;
 	}
 
 	if ($vars)
 	{
 		if (my $ref = ref($vars))
 		{
-			die "VARS was a reference to a ".$ref." instead of an array"
+			nice_die("VARS was a reference to a ".$ref." instead of an array")
 				unless $ref eq 'ARRAY';
 			@_ = ('vars', grep /^(?:\$|\@|\%)/, eval { expand_tags($vars, \%tags) });
-			die "$@while building the EXPORT list in $callpkg" if $@;
+			nice_die("$@while building the \@EXPORT") if $@;
 		}
 		else
 		{
@@ -134,18 +132,28 @@ sub set_export_vars
 
 	if (%args)
 	{
-		die "Attempt to use unknown keys: ", join(", ", keys %args);
+		nice_die("Attempt to use unknown keys: ", join(", ", keys %args));
 	}
 
-	@{"$callpkg\::EXPORT"} = @will_export;
-	%{"$callpkg\::EXPORT_TAGS"} = %tags;
+	@{"$callpkg\::EXPORT"} = @will_export if @will_export;
+	%{"$callpkg\::EXPORT_TAGS"} = %tags if %tags;
 	@{"$callpkg\::EXPORT_OK"} = $ok_only ? @ok_only : @could_export;
-	@{"$callpkg\::EXPORT_FAIL"} = @fail;
+	@{"$callpkg\::EXPORT_FAIL"} = @fail if @fail;
 
 	if (@_ > 1)
 	{
 		goto &vars::import;
 	}
+}
+
+sub nice_die
+{
+	my $msg = shift;
+	my $level = shift || 1;
+
+	my ($pkg, $file, $line) = caller(1);
+
+	die "$msg at $file line $line\n";
 }
 
 sub add_tags($;$)

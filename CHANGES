@@ -1,6 +1,16 @@
+0.14
+
+some slight optimistaions
+
+no longer subtracting the FAIL from OK
+
+more helpful errors messages
+
+added benchmark
+
 0.13
 
-I should have fixed Easiet to work with ALL as weel as VARS and ISA, done now
+I should have fixed Easiest to work with ALL as weel as VARS and ISA, done now
 
 Doc fixes
 

@@ -1,0 +1,119 @@
+#! /usr/bin/perl
+
+use strict;
+
+use Benchmark;
+
+require Exporter::Easy;
+
+use vars;
+
+my $old_simple = sub
+{
+	eval <<'EOM';
+	our(@EXPORT) = qw(getservbyname getservbyport getservent getserv);
+	@ISA = ('Exporter');
+EOM
+};
+
+my $new_simple = sub
+{
+	eval <<'EOM';
+	use Exporter::Easy(
+		EXPORT => [qw(getservbyname getservbyport getservent getserv)],
+	);
+EOM
+};
+
+
+my $old_our_vars = sub
+{
+	eval <<'EOM';
+	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+	@ISA = ('Exporter');
+	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+	@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+	our ($s_name, @s_aliases, $s_port, $sx_proto);
+EOM
+};
+
+my $old_use_vars = sub
+{
+	eval <<'EOM';
+	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+	@ISA = ('Exporter');
+	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+	@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+	use vars @EXPORT_OK;
+EOM
+};
+
+my $old_grep_vars = sub
+{
+	eval <<'EOM';
+	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+	@ISA = ('Exporter');
+	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+	@EXPORT_OK   = qw( $s_name s_aliases $s_port $s_proto );
+	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+	use vars grep /^\$/, @EXPORT_OK;
+EOM
+};
+
+my $new_vars = sub
+{
+	eval <<'EOM';
+	use Exporter::Easy(
+		EXPORT => [qw(getservbyname getservbyport getservent getserv)],
+		OK => [qw( $s_name @s_aliases $s_port $s_proto )],
+		ALL => 'FIELDS',
+	);
+EOM
+};
+
+my $old_no_vars = sub
+{
+	eval <<'EOM';
+	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+	@ISA = ('Exporter');
+	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+	@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+EOM
+};
+
+my $new_no_vars = sub
+{
+	eval <<'EOM';
+	use Exporter::Easy(
+		EXPORT => [qw(getservbyname getservbyport getservent getserv)],
+		OK => [qw( $s_name @s_aliases $s_port $s_proto )],
+		ALL => '',
+		VARS => 0,
+	);
+EOM
+};
+
+for my $i (1..1000)
+{
+	&$new_no_vars;
+}
+
+my $time = -3;
+timethese($time,
+	{
+		old_simple => $old_no_vars,
+		new_simple => $new_no_vars,
+	}
+);
+timethese($time,
+	{
+		old_our_vars => $old_our_vars,
+		old_use_vars => $old_use_vars,
+		old_grep_vars => $old_grep_vars,
+		new_vars => $new_vars,
+	}
+);
+
