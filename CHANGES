@@ -1,3 +1,9 @@
+0.13
+
+I should have fixed Easiet to work with ALL as weel as VARS and ISA, done now
+
+Doc fixes
+
 0.12
 
 Fixed Easiest to handle scalar values for VARS and ISA

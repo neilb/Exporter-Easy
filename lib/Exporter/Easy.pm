@@ -1,4 +1,4 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.16 2003/02/13 02:19:12 fergal Exp $
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.17 2003/02/13 13:08:42 fergal Exp $
 
 use strict;
 no strict 'refs';
@@ -11,7 +11,7 @@ require Exporter;
 
 use vars;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 sub import
 {
@@ -270,7 +270,7 @@ becomes
 and more complicated situations where you use tags to build lists and more
 tags become easy, like this
 
-  use Exporter (
+  use Exporter::Easy (
   	EXPORT => [qw( init :base )],
   	TAGS => [
   		base => [qw( open close )],

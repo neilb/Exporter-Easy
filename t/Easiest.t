@@ -101,52 +101,36 @@ is_deeply(
 );
 
 is_deeply(
-	{
-		parse_spec(q(
-			VARS => a b
-		))
-	},
-	{
-		VARS => [qw( a b )],
-	},
+	{ parse_spec(q(VARS => a b)) },
+	{ VARS => [qw( a b )] },
 	"VARS list"
 );
 
 is_deeply(
-	{
-		parse_spec(q(
-			VARS => a
-		))
-	},
-	{
-		VARS => [qw( a )],,
-	},
+	{ parse_spec(q(VARS => a)) },
+	{ VARS => [qw( a )] },
 	"VARS list of 1"
 );
 is_deeply(
-	{
-		parse_spec(q(
-			VARS => 1
-		))
-	},
-	{
-		VARS => 1,
-	},
+	{ parse_spec(q(VARS => 1)) },
+	{ VARS => 1 },
 	"VARS 1"
 );
 
 is_deeply(
-	{
-		parse_spec(q(
-			VARS => 0
-		))
-	},
-	{
-		VARS => 0,
-	},
+	{ parse_spec(q(VARS => 0)) },
+	{ VARS => 0 },
 	"VARS 0"
 );
 
+is_deeply(
+	{ parse_spec(q(ALL => all)) },
+	{ ALL => 'all' },
+	"good ALL works"
+);
+
+eval {parse_spec(q(ALL => all other))};
+ok($@, "bad all dies");
 
 package Test::The::Use;
 

@@ -1,4 +1,4 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easiest.pm,v 1.4 2003/02/13 02:18:24 fergal Exp $
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easiest.pm,v 1.5 2003/02/13 13:09:15 fergal Exp $
 # Be lean.
 use strict;
 no strict 'refs';
@@ -34,6 +34,7 @@ sub parse_spec
 	{
 		my $new_key = shift @spec;
 		my $arrow = shift @spec;
+		$arrow = "" unless defined($arrow);
 		die "Expected '=>' not '$arrow' after $new_key" unless ($arrow eq '=>');
 
 		if ($new_key =~ s/^://)
@@ -49,9 +50,17 @@ sub parse_spec
 
 			# VARS and ISA should aren't necessarily a list
 
-			$spec{$key} = ($key =~ /^(VARS|ISA)$/ and $spec[0] =~ /^\d+$/) ?
-				shift @spec :
-				suck_list(\@spec);
+			if(
+				($key =~ /^(VARS|ISA)$/ and $spec[0] =~ /^\d+$/) or
+				($key eq 'ALL')
+			)
+			{
+				$spec{$key} = shift @spec;
+			}
+			else
+			{
+				$spec{$key} = suck_list(\@spec);
+			}
 		}
 	}
 
