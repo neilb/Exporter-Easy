@@ -1,4 +1,4 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.11 2003/02/13 00:51:23 fergal Exp $
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.16 2003/02/13 02:19:12 fergal Exp $
 
 use strict;
 no strict 'refs';
@@ -11,7 +11,7 @@ require Exporter;
 
 use vars;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 sub import
 {
@@ -255,9 +255,8 @@ In other files which wish to use YourModule:
 
 =head1 DESCRIPTION
 
-The Exporter::Easy module is a wrapper around Exporter. In it's simplest
-case it allows you to drop the boilerplate code that comes with using
-Exporter, so
+Exporter::Easy makes using Exporter easy. In it's simplest case it allows
+you to drop the boilerplate code that comes with using Exporter, so
 
   require Exporter;
   use base qw( Exporter );
@@ -284,8 +283,8 @@ tags become easy, like this
   	OK => [qw( some other stuff )],
   );
 
-It sets C<@EXPORT>, C<@EXPORT_OK>, C<@EXPORT_FAIL> and C<%EXPORT_TAGS> in
-the current package, adds Exporter to that package's C<@ISA> and does a
+This will set C<@EXPORT>, C<@EXPORT_OK>, C<@EXPORT_FAIL> and C<%EXPORT_TAGS>
+in the current package, add Exporter to that package's C<@ISA> and do a
 C<use vars> on all the variables mentioned. The rest is handled as normal by
 Exporter.
 
@@ -295,7 +294,7 @@ Put
 
 	use Exporter::Easy ( KEY => value, ...);
 
-In your package. Arguments are passes as key-value pairs, the following keys
+in your package. Arguments are passes as key-value pairs, the following keys
 are available
 
 =over 4

@@ -100,6 +100,54 @@ is_deeply(
 	"everything"
 );
 
+is_deeply(
+	{
+		parse_spec(q(
+			VARS => a b
+		))
+	},
+	{
+		VARS => [qw( a b )],
+	},
+	"VARS list"
+);
+
+is_deeply(
+	{
+		parse_spec(q(
+			VARS => a
+		))
+	},
+	{
+		VARS => [qw( a )],,
+	},
+	"VARS list of 1"
+);
+is_deeply(
+	{
+		parse_spec(q(
+			VARS => 1
+		))
+	},
+	{
+		VARS => 1,
+	},
+	"VARS 1"
+);
+
+is_deeply(
+	{
+		parse_spec(q(
+			VARS => 0
+		))
+	},
+	{
+		VARS => 0,
+	},
+	"VARS 0"
+);
+
+
 package Test::The::Use;
 
 use Exporter::Easiest q(
