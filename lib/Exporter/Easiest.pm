@@ -15,9 +15,9 @@ sub import
 
 	my $callpkg = caller(0);
 
-	my @real_spec = parse_spec(@_);
+	@_ = ($callpkg, parse_spec(@_));
 
-	&Exporter::Easy::set_export_vars($callpkg, @real_spec);
+	goto &Exporter::Easy::set_export_vars;
 }
 
 sub parse_spec

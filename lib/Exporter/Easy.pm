@@ -10,7 +10,7 @@ require Exporter;
 
 use vars;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 sub import
 {

@@ -1,10 +1,12 @@
-lib/Exporter/Easy.pm
+bench
+CHANGES
 lib/Exporter/Easiest.pm
-t/Easy.t
-t/Easiest.t
-TODO
-README
+lib/Exporter/Easy.pm
 Makefile.PL
 MANIFEST
-CHANGES
-bench
+README
+t/Easiest.t
+t/Easy.t
+t/Run.pm
+TODO
+META.yml                                 Module meta-data (added by MakeMaker)

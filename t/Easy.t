@@ -2,9 +2,10 @@ use strict;
 
 use Test::More tests => 51;
 
-require Exporter::Easy;
-pass( 'Exporter::Easy compiled' );
+use lib 't';
+use Run;
 
+require_ok('Exporter::Easy');
 
 package Start::Testing::Use::Functions;
 
@@ -219,13 +220,9 @@ use Exporter::Easy(
 
 foreach my $type (qw( $ @ % ))
 {
-	eval "${type}\{hello}";
+	::runs_ok("${type}\{hello}", "tag vars can use var ${type}hello");
 
-	::ok($@ ? 0 : 1, "tag vars can use var ${type}hello");
-
-	eval "${type}\{goodbye}";
-
-	::ok($@ ? 0 : 1, "tag vars can't use var ${type}goodbye");
+	::runs_ok("${type}\{goodbye}", "tag vars can't use var ${type}goodbye");
 }
 
 package Test::Vars::List;
@@ -240,18 +237,12 @@ use Exporter::Easy(
 
 foreach my $type (qw( $ @ % ))
 {
-	eval "${type}\{hello}";
+	::runs_ok("${type}\{hello}", "list vars can use var ${type}hello");
 
-	::ok($@ ? 0 : 1, "list vars can use var ${type}hello");
-
-	eval "${type}\{goodbye}";
-
-	::ok($@ ? 1 : 0, "list vars can't use var ${type}goodbye");
+	::dies_ok("${type}\{goodbye}", "list vars can't use var ${type}goodbye");
 }
 
-eval '$cat';
-
-::ok($@ ? 0 : 1, 'list vars can use var $cat');
+::runs_ok('$cat', 'list vars can use var $cat');
 
 package Test::Vars::Fail;
 
@@ -264,7 +255,5 @@ use Exporter::Easy(
 
 foreach my $type (qw( $ @ % ))
 {
-	eval "${type}\{goodbye}";
-
-	::ok($@ ? 1 : 0, "no vars can't use var ${type}goodbye");
+	::dies_ok("${type}\{goodbye}", "no vars can't use var ${type}goodbye");
 }

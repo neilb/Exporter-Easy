@@ -1,10 +1,11 @@
 use strict;
 
-#use Test::More tests => 26;
-use Test::More qw( no_plan );
+use Test::More tests => 21;
 
-require Exporter::Easiest;
-pass( 'Exporter::Easiest compiled' );
+use lib 't';
+use Run;
+
+require_ok('Exporter::Easiest');
 
 {
 	no strict 'refs';
@@ -156,3 +157,8 @@ my %e = %EXPORT_TAGS;
 ::ok(::eq_set( $e{tag3}, [qw( a c e )] ), "use TAGS tag3");
 ::ok(keys(%e) == 3, "use TAGS count");
 
+package Test::Vars;
+
+use Exporter::Easiest qw( OK => $Var );
+
+::runs_ok('$Var', 'tag vars can use var $Var');

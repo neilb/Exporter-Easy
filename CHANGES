@@ -1,3 +1,11 @@
+0.16
+
+Fixed Exporter::Easiest so that it automatically does the use vars, the
+problem was that I was not using the magic goto so the vars were being used
+in the wrong package.
+
+Factored out some code in the vars tests.
+
 0.15
 
 changed the processing order and documented it
