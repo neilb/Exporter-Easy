@@ -163,9 +163,9 @@ use Exporter::Easy (
 use vars qw( @EXPORT @EXPORT_OK @EXPORT_FAIL %EXPORT_TAGS );
 
 ::ok(::eq_set( \@EXPORT, [qw( open close read write)] ), "use tags in EXPORT");
-::ok(::eq_set( \@EXPORT_OK, [qw( f_1 f_2 sysopen sysclose read write)] ), "use FAIL in EXPORT_OK");
+::ok(::eq_set( \@EXPORT_OK, [qw( hello f_1 f_2 sysopen sysclose read write )]) , "use FAIL in EXPORT_OK");
 ::ok(::eq_set( \@EXPORT_FAIL, [qw( hello f_1 f_2 )] ), "use tags in EXPORT");
-::ok(::eq_set( $EXPORT_TAGS{all}, [qw( f_1 f_2 read write sysopen sysclose )] ), "use ALL with FAIL");
+::ok(::eq_set( $EXPORT_TAGS{all}, [qw( hello f_1 f_2 read write sysopen sysclose open close )] ), "use ALL with FAIL");
 
 package Test::The::Use5;
 

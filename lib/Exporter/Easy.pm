@@ -1,7 +1,6 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.16 2003/02/13 02:19:12 fergal Exp $
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.24 2003/02/14 16:53:20 fergal Exp $
 
-#use strict;
-#no strict 'refs';
+use strict;
 
 package Exporter::Easy;
 
@@ -11,7 +10,7 @@ require Exporter;
 
 use vars;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 sub import
 {
@@ -35,7 +34,7 @@ sub set_export_vars
 
 	my %could_export; # symbols that could be exported
 	my @will_export; # symbols that will be exported by default
-	my @fail; # symbols that should not be exported
+	my @fail; # symbols that should be tested before export
 	my @ok_only; # the symbols that are ok to export
 
 	my %tags; # will contain a ref hash of all tags
@@ -50,11 +49,6 @@ sub set_export_vars
 	my $isa = exists $args{ISA} ? delete $args{ISA} : 1;
 	my $vars = exists $args{VARS} ? delete $args{VARS} : 1;
 
-	if ($isa)
-	{
-		push(@{"$callpkg\::ISA"}, "Exporter");
-	}
-
 	if (my $tag_data = delete $args{'TAGS'})
 	{
 		nice_die("TAGS must be a reference to an array") unless ref($tag_data) eq 'ARRAY';
@@ -62,6 +56,15 @@ sub set_export_vars
 		add_tags($tag_data, \%tags);
 
 		@could_export{map {@$_} values %tags} = ();
+	}
+
+	if (my $export = delete $args{'EXPORT'})
+	{
+		nice_die("EXPORT must be a reference to an array")
+			unless ref($export) eq 'ARRAY';
+		
+		@will_export = eval { expand_tags($export, \%tags) };
+		nice_die("$@while building the EXPORT list in $callpkg") if $@;
 	}
 
 	if (my $ok = delete $args{'OK'})
@@ -73,14 +76,6 @@ sub set_export_vars
 		@could_export{@ok} = ();
 	}
 
-	if (my $fail = delete $args{'FAIL'})
-	{
-		die "FAIL must be a reference to an array" unless ref($fail) eq 'ARRAY';
-
-		@fail = eval { expand_tags($fail, \%tags) };
-		nice_die("$@while building \@EXPORT_FAIL") if $@;
-	}
-
 	my $ok_only = delete $args{'OK_ONLY'};
 	if ($ok_only)
 	{
@@ -90,6 +85,15 @@ sub set_export_vars
 		nice_die("$@while building the OK_ONLY list") if $@;
 
 		@could_export{@ok_only} = ();
+	}
+
+	if (my $fail = delete $args{'FAIL'})
+	{
+		die "FAIL must be a reference to an array" unless ref($fail) eq 'ARRAY';
+
+		@fail = eval { expand_tags($fail, \%tags) };
+		nice_die("$@while building \@EXPORT_FAIL") if $@;
+		@could_export{@fail} = ();
 	}
 
 	my @could_export = keys %could_export;
@@ -106,15 +110,6 @@ sub set_export_vars
 		$tags{$all} = [keys %all];
 	}
 
-	if (my $export = delete $args{'EXPORT'})
-	{
-		nice_die("EXPORT must be a reference to an array")
-			unless ref($export) eq 'ARRAY';
-		
-		@will_export = eval { expand_tags($export, \%tags) };
-		nice_die("$@while building the EXPORT list in $callpkg") if $@;
-	}
-
 	if ($vars)
 	{
 		if (my $ref = ref($vars))
@@ -126,13 +121,19 @@ sub set_export_vars
 		}
 		else
 		{
-			@_ = ('vars', grep /^(?:\$|\@|\%)/, @will_export, @could_export, @fail);
+			@_ = ('vars', grep /^(?:\$|\@|\%)/, @will_export, @could_export);
 		}
 	}
 
 	if (%args)
 	{
 		nice_die("Attempt to use unknown keys: ", join(", ", keys %args));
+	}
+
+	no strict 'refs';
+	if ($isa)
+	{
+		push(@{"$callpkg\::ISA"}, "Exporter");
 	}
 
 	@{"$callpkg\::EXPORT"} = @will_export if @will_export;
@@ -215,25 +216,30 @@ sub expand_tags($$)
 			$remove = 1;
 		}
 
-		if ($sym =~ s/://)
+		if ($sym =~ s/^://)
 		{
 			my $sub_tag = $so_far->{$sym};
 			die "Tried to use an unknown tag '$sym'" unless defined($sub_tag);
 
-			@symbols = @{$sub_tag};
+			if ($remove)
+			{
+				delete @this_tag{@$sub_tag}
+			}
+			else
+			{
+				@this_tag{@$sub_tag} = ();
+			}
 		}
 		else
 		{
-			@symbols = ($sym);
-		}
-
-		if ($remove)
-		{
-			delete @this_tag{@symbols};
-		}
-		else
-		{
-			@this_tag{@symbols} = ();
+			if ($remove)
+			{
+				delete $this_tag{$sym};
+			}
+			else
+			{
+				$this_tag{$sym} = undef;
+			}
 		}
 	}
 
@@ -307,20 +313,6 @@ are available
 
 =over 4
 
-=item EXPORT
-
-The value should be a reference to a list of symbol names and tags. Any tags
-will be expanded and the resulting list of symbol names will be placed in
-the C<@EXPORT> array in your package. The tag created by the ALL key is not
-available at this stage.
-
-=item FAIL
-
-The value should be a reference to a list of symbol names and tags. The tags
-will be expanded and the resulting list of symbol names will be placed in
-the C<@EXPORT_FAIL> array in your package. They will also be removed from
-the C<@EXPORT_OK> list.
-
 =item TAGS
 
 The value should be a reference to a list that goes like (TAG_NAME,
@@ -366,6 +358,20 @@ you just want to add some symbols to the list that Exporter::Easy has
 automatically built then you should use OK instead. Using OK_ONLY and OK
 together will give an error.
 
+=item EXPORT
+
+The value should be a reference to a list of symbol names and tags. Any tags
+will be expanded and the resulting list of symbol names will be placed in
+the C<@EXPORT> array in your package. The tag created by the ALL key is not
+available at this stage.
+
+=item FAIL
+
+The value should be a reference to a list of symbol names and tags. The tags
+will be expanded and the resulting list of symbol names will be placed in
+the C<@EXPORT_FAIL> array in your package. They will also be added to
+the C<@EXPORT_OK> list.
+
 =item ALL
 
 The value should be the name of tag that doesn't yet exist. This tag will
@@ -385,9 +391,17 @@ have to do your own C<use vars> in your package.
 
 =back
 
-=head1 DETAILED EXPLANATION
+=head1 PROCESSING ORDER
 
-Keeps changing too much once it stops changing so much, I'll write this.
+We need take the information provided and build @EXPORT, @EXPORT_OK,
+@EXPORT_FAIL and %EXPORT_TAGS in the calling package. We may also
+need to build a tag with all of the symbols and to make all the variables
+useable under strict.
+
+The arguments are processed in the following order: TAGS, EXPORT, OK,
+OK_ONLY and FAIL, ALL, VARS and finally ISA. This means you cannot use the
+tag created by ALL anywhere except in VARS (although vars defaults to using
+all symbols anyway).
 
 =head1 SEE ALSO
 

@@ -2,118 +2,149 @@
 
 use strict;
 
-use Benchmark;
+use lib 'lib';
+
+use Benchmark qw(cmpthese);
 
 require Exporter::Easy;
 
 use vars;
 
-my $old_simple = sub
-{
-	eval <<'EOM';
-	our(@EXPORT) = qw(getservbyname getservbyport getservent getserv);
-	@ISA = ('Exporter');
+my $file_bms = {
+	new => '',
+	old => '',
+};
+
+my $simple_bms = {
+	old_simple => <<'EOM',
+our(@EXPORT) = qw(getservbyname getservbyport getservent getserv);
+our @ISA = ('Exporter');
+EOM
+	new_simple => <<'EOM',
+use Exporter::Easy(
+	EXPORT => [qw(getservbyname getservbyport getservent getserv)],
+);
 EOM
 };
 
-my $new_simple = sub
-{
-	eval <<'EOM';
-	use Exporter::Easy(
-		EXPORT => [qw(getservbyname getservbyport getservent getserv)],
-	);
+my $vars_bms = {
+		old_our_vars => <<'EOM',
+our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+@ISA = ('Exporter');
+@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+our ($s_name, @s_aliases, $s_port, $sx_proto);
+EOM
+	old_use_vars => <<'EOM',
+our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+@ISA = ('Exporter');
+@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+use vars @EXPORT_OK;
+EOM
+
+	old_grep_vars => <<'EOM',
+our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+@ISA = ('Exporter');
+@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+use vars grep /^\$/, @EXPORT_OK;
+EOM
+	new_vars => <<'EOM',
+use Exporter::Easy(
+	EXPORT => [qw(getservbyname getservbyport getservent getserv)],
+	OK => [qw( $s_name @s_aliases $s_port $s_proto )],
+	ALL => 'FIELDS',
+);
+EOM
+};
+
+my $no_vars_bms = {
+	old_no_vars => <<'EOM',
+our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+@ISA = ('Exporter');
+@EXPORT      = qw(getservbyname getservbyport getservent getserv);
+@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
+%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
+EOM
+
+	new_no_vars => <<'EOM',
+use Exporter::Easy(
+	EXPORT => [qw(getservbyname getservbyport getservent getserv)],
+	OK => [qw( $s_name @s_aliases $s_port $s_proto )],
+	ALL => 'FIELDS',
+	VARS => 0,
+);
 EOM
 };
 
 
-my $old_our_vars = sub
-{
-	eval <<'EOM';
-	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
-	@ISA = ('Exporter');
-	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
-	@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
-	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
-	our ($s_name, @s_aliases, $s_port, $sx_proto);
-EOM
-};
+my @bms = (
+	$file_bms,
+	$vars_bms,
+	$no_vars_bms,
+	$simple_bms,
+);
 
-my $old_use_vars = sub
-{
-	eval <<'EOM';
-	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
-	@ISA = ('Exporter');
-	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
-	@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
-	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
-	use vars @EXPORT_OK;
-EOM
-};
+my @comps;
 
-my $old_grep_vars = sub
+foreach my $bm (@bms)
 {
-	eval <<'EOM';
-	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
-	@ISA = ('Exporter');
-	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
-	@EXPORT_OK   = qw( $s_name s_aliases $s_port $s_proto );
-	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
-	use vars grep /^\$/, @EXPORT_OK;
-EOM
-};
+	foreach my $want_files (
+		'',
+#		'_file'
+	)
+	{
+		my %comp;
+		while (my ($name, $code) = (each %$bm))
+		{
+			$comp{"$name$want_files"} = make_bm("$name$want_files", $code, $want_files);
+		}
 
-my $new_vars = sub
-{
-	eval <<'EOM';
-	use Exporter::Easy(
-		EXPORT => [qw(getservbyname getservbyport getservent getserv)],
-		OK => [qw( $s_name @s_aliases $s_port $s_proto )],
-		ALL => 'FIELDS',
-	);
-EOM
-};
-
-my $old_no_vars = sub
-{
-	eval <<'EOM';
-	our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
-	@ISA = ('Exporter');
-	@EXPORT      = qw(getservbyname getservbyport getservent getserv);
-	@EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
-	%EXPORT_TAGS = (FIELDS => [ @EXPORT_OK, @EXPORT ] );
-EOM
-};
-
-my $new_no_vars = sub
-{
-	eval <<'EOM';
-	use Exporter::Easy(
-		EXPORT => [qw(getservbyname getservbyport getservent getserv)],
-		OK => [qw( $s_name @s_aliases $s_port $s_proto )],
-		ALL => '',
-		VARS => 0,
-	);
-EOM
-};
-
-for my $i (1..1000)
-{
-	&$new_no_vars;
+		push(@comps, \%comp);
+	}
 }
 
-my $time = -3;
-timethese($time,
+my $time = -2;
+
+foreach my $bm (@comps)
+{
+	cmpthese($time, $bm);
+}
+
+sub make_bm
+{
+	my ($name, $code, $want_files) = @_;
+
+	my @files;
+
+	if ($want_files)
 	{
-		old_simple => $old_no_vars,
-		new_simple => $new_no_vars,
+		@files = ('lib/Exporter.pm');
+		if ($name =~ /^new/)
+		{
+			push(@files, 'lib/Exporter/Easy.pm');
+		}
+		else
+		{
+		}
 	}
-);
-timethese($time,
-	{
-		old_our_vars => $old_our_vars,
-		old_use_vars => $old_use_vars,
-		old_grep_vars => $old_grep_vars,
-		new_vars => $new_vars,
-	}
-);
+
+	my @file_code = map { "do '$_';" } @files;
+
+	my $all_code = join("\n", @file_code, $code);
+
+	eval $all_code;
+	die "$all_code\n$@" if $@;
+
+	# print "------------------$name----------------\n$all_code\n\n";
+
+	return sub {
+		eval $all_code
+	};
+
+}
 

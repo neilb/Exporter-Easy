@@ -1,3 +1,14 @@
+0.15
+
+changed the processing order and documented it
+
+FAIL symbols are now added to EXPORT_OK
+
+Fixed bug, ":" now is anchored to start of string for tag detection is Easiest
+
+Optimised expand_tags a little by specialising the add/delete code for the
+tag and non-tag cases.
+
 0.14
 
 some slight optimistaions
