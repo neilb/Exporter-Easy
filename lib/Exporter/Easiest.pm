@@ -1,4 +1,4 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easiest.pm,v 1.1 2003/02/11 23:55:07 fergal Exp $
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easiest.pm,v 1.2 2003/02/12 12:18:44 fergal Exp $
 # Be lean.
 use strict;
 no strict 'refs';
@@ -36,13 +36,12 @@ sub parse_spec
 		my $arrow = shift @spec;
 		die "Expected => not '$arrow' after $new_key" unless ($arrow eq '=>');
 
-
 		if ($new_key =~ s/^://)
 		{
 			# if the new key starts with a : then it and the following list are
-			# pushed onto the previous keys's entry
+			# pushed onto the TAGS entry
 
-			push(@{$spec{$key}}, $new_key, suck_list(\@spec));
+			push(@{$spec{TAGS}}, $new_key, suck_list(\@spec));
 		}
 		else
 		{
@@ -90,10 +89,10 @@ In module YourModule.pm:
 
   package YourModule;
   use Exporter::Easiest q(
+    EXPORT => :tag1
     OK => munge frobnicate
-    TAGS =>
-    	:tag1 => a b c 
-    	:tag2 => :tag1 d e f
+   	:tag1 => a b c 
+   	:tag2 => :tag1 d e f
     FAIL => f g h
   );
 
@@ -107,7 +106,8 @@ In other files which wish to use YourModule:
 The Exporter::Easiest module is a wrapper around Exporter::Easy. It allows
 you to pass the arguments into Exporter::Easy without all those tiresome []s
 and qw()s. You pass arguments in as a string or an array of strings. You no
-longer need to brack things or take references.
+longer need to brack things or take references. If want, you can also leave
+out the TAGS key and just put tag definitions along with the other keys.
 
 The important thing to remember is that tags should be preceded by :
 everywhere, including to the left of the =>, otherwise it'll get confused.

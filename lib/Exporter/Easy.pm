@@ -1,5 +1,5 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.3 2003/02/11 23:54:39 fergal Exp $
-# Be lean.
+# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.11 2003/02/13 00:51:23 fergal Exp $
+
 use strict;
 no strict 'refs';
 
@@ -9,15 +9,19 @@ require 5.006;
 
 require Exporter;
 
-our $VERSION = '0.1';
+use vars;
+
+our $VERSION = '0.11';
 
 sub import
 {
 	my $pkg = shift;
 
-	my $callpkg = caller(0);
+	unshift(@_, scalar caller);
 
-	return set_export_vars($callpkg, @_);
+	# must goto or we lose the use vars functionality
+
+	goto &set_export_vars;
 }
 
 sub set_export_vars
@@ -27,15 +31,29 @@ sub set_export_vars
 	# when defining @EXPORT, @EXPORT_FAIL and other in tags. It also takes
 	# care of @EXPORT_OK.
 	
-	my $callpkg = shift;
-	my %args = @_;
+	my ($callpkg, %args) = @_;
 
-	push(@{"$callpkg\::ISA"}, "Exporter");
+	my %could_export; # symbols that could be exported
+	my @will_export; # symbols that will be exported by default
+	my @fail; # symbols that should not be exported
+	my @ok_only; # the symbols that are ok to export
 
-	my @ok; # this will be a list of all the symbols mentioned
-	my @export; # this will be a list symbols to be exported by default
-	my @fail; # this will be a list symbols that should not be exported
 	my %tags; # will contain a ref hash of all tags
+
+	@_ = (); # we'll be using this for vars to be use vars'd
+
+	if ($args{OK_ONLY} and $args{OK})
+	{
+		die "Can't use OK_ONLY and OK together in $callpkg";
+	}
+
+	my $isa = exists $args{ISA} ? delete $args{ISA} : 1;
+	my $vars = exists $args{VARS} ? delete $args{VARS} : 1;
+
+	if ($isa)
+	{
+		push(@{"$callpkg\::ISA"}, "Exporter");
+	}
 
 	if (my $tag_data = delete $args{'TAGS'})
 	{
@@ -43,18 +61,16 @@ sub set_export_vars
 
 		add_tags($tag_data, \%tags);
 
-		push(@ok, map {@$_} values %tags);
+		@could_export{map {@$_} values %tags} = ();
 	}
 
-	if (my $export = delete $args{'EXPORT'})
+	if (my $ok = delete $args{'OK'})
 	{
-		die "EXPORT must be a reference to an array"
-			unless ref($export) eq 'ARRAY';
+		die "OK must be a reference to a array" unless ref($ok) eq 'ARRAY';
 
-		@export = eval { expand_tags($export, \%tags) };
-		die "$@while building the EXPORT list in $callpkg" if $@;
-
-		push(@ok, @export);
+		my @ok = eval { expand_tags($ok, \%tags) };
+		die "$@while building the OK list in $callpkg" if $@;
+		@could_export{@ok} = ();
 	}
 
 	if (my $fail = delete $args{'FAIL'})
@@ -63,34 +79,57 @@ sub set_export_vars
 
 		@fail = eval { expand_tags($fail, \%tags) };
 		die "$@while building the FAIL list in $callpkg" if $@;
+
+		delete @could_export{@fail};
 	}
 
-	if (my $ok = delete $args{'OK'})
+	my $ok_only = delete $args{'OK_ONLY'};
+	if ($ok_only)
 	{
-		die "OK must be a reference to a array" unless ref($ok) eq 'ARRAY';
+		die "OK_ONLY must be a reference to a array" unless ref($ok_only) eq 'ARRAY';
 
-		push(@ok, @$ok);
+		@ok_only = eval { expand_tags($ok_only, \%tags) };
+		die "$@while building the OK_ONLY list in $callpkg" if $@;
+
+		@could_export{@ok_only} = ();
 	}
 
-	# uniquify the OK symbols and take out any fails
-	@ok = do
-	{
-		my %o;
-		@{o}{@ok} = ();
-		delete @o{@fail};
-		keys %o
-	};
+	my @could_export = keys %could_export;
 
 	if (my $all = delete $args{'ALL'})
 	{
 		die "No name supplied for ALL" unless length($all);
 
 		die "Cannot use '$all' for ALL, already exists" if exists $tags{$all};
-		my @all = (@ok, @export);
-		# uniquify 
-		@all = do { my %o; @{o}{@all} = (); keys %o };
 
-		$tags{$all} = \@all;
+		my %all;
+		@all{@could_export, @will_export} = ();
+
+		$tags{$all} = [keys %all];
+	}
+
+	if (my $export = delete $args{'EXPORT'})
+	{
+		die "EXPORT must be a reference to an array"
+			unless ref($export) eq 'ARRAY';
+		
+		@will_export = eval { expand_tags($export, \%tags) };
+		die "$@while building the EXPORT list in $callpkg" if $@;
+	}
+
+	if ($vars)
+	{
+		if (my $ref = ref($vars))
+		{
+			die "VARS was a reference to a ".$ref." instead of an array"
+				unless $ref eq 'ARRAY';
+			@_ = ('vars', grep /^(?:\$|\@|\%)/, eval { expand_tags($vars, \%tags) });
+			die "$@while building the EXPORT list in $callpkg" if $@;
+		}
+		else
+		{
+			@_ = ('vars', grep /^(?:\$|\@|\%)/, @will_export, @could_export, @fail);
+		}
 	}
 
 	if (%args)
@@ -98,10 +137,15 @@ sub set_export_vars
 		die "Attempt to use unknown keys: ", join(", ", keys %args);
 	}
 
-	@{"$callpkg\::EXPORT"} = @export;
+	@{"$callpkg\::EXPORT"} = @will_export;
 	%{"$callpkg\::EXPORT_TAGS"} = %tags;
-	@{"$callpkg\::EXPORT_OK"} = @ok;
+	@{"$callpkg\::EXPORT_OK"} = $ok_only ? @ok_only : @could_export;
 	@{"$callpkg\::EXPORT_FAIL"} = @fail;
+
+	if (@_ > 1)
+	{
+		goto &vars::import;
+	}
 }
 
 sub add_tags($;$)
@@ -131,7 +175,6 @@ sub add_tags($;$)
 			unless ref($tag_list) eq 'ARRAY';
 
 		my @symbols = eval { expand_tags($tag_list, $tags) };
-
 		die "$@while building tag '$tag_name'" if $@;
 
 		$tags->{$tag_name} = \@symbols;
@@ -202,7 +245,7 @@ In module YourModule.pm:
 
   package YourModule;
   use Exporter::Easy (
-    OK => [ 'munge', 'frobnicate' ] # symbols to export on request
+    OK => [ '$munge', 'frobnicate' ] # symbols to export on request
   );
 
 In other files which wish to use YourModule:
@@ -241,9 +284,10 @@ tags become easy, like this
   	OK => [qw( some other stuff )],
   );
 
-All it does is set up C<@EXPORT>, C<@EXPORT_OK>, C<@EXPORT_FAIL> and
-C<%EXPORT_TAGS> in the current package and add Exporter to that packages
-C<@ISA>. The rest is handled as normal by Exporter.
+It sets C<@EXPORT>, C<@EXPORT_OK>, C<@EXPORT_FAIL> and C<%EXPORT_TAGS> in
+the current package, adds Exporter to that package's C<@ISA> and does a
+C<use vars> on all the variables mentioned. The rest is handled as normal by
+Exporter.
 
 =head1 HOW TO USE IT
 
@@ -260,7 +304,8 @@ are available
 
 The value should be a reference to a list of symbol names and tags. Any tags
 will be expanded and the resulting list of symbol names will be placed in
-the C<@EXPORT> array in your package.
+the C<@EXPORT> array in your package. The tag created by the ALL key is not
+available at this stage.
 
 =item FAIL
 
@@ -301,15 +346,41 @@ your package's C<@EXPORT_OK> array.
 
 =item OK
 
-The value should be a reference to a list of symbols names. These symbols
-will be added to the C<@EXPORT_OK> array in your package.
+The value should be a reference to a list of symbols and tags (which will be
+exapanded). These symbols will be added to the C<@EXPORT_OK> array in your
+package. Using OK and and OK_ONLY together will give an error.
+
+=item OK_ONLY
+
+The value should be a reference to a list of symbols and tags (which will be
+exapanded). The C<@EXPORT_OK> array in your package will contains only these
+symbols.. This totally overrides the automatic population of this array. If
+you just want to add some symbols to the list that Exporter::Easy has
+automatically built then you should use OK instead. Using OK_ONLY and OK
+together will give an error.
 
 =item ALL
 
 The value should be the name of tag that doesn't yet exist. This tag will
 contain a list of all symbols which can be exported.
 
+=item ISA
+
+If you set this to 0 then Exporter will not be added to your C<@ISA> list.
+
+=item VARS
+
+If this is set to 1 or not provided then all $, @ and % variables mentioned
+previously will be available to use in your package as if you had done a
+C<use vars> on them. If it's set to a reference to a list of symbols and
+tags then only those symbols will be available. If it's set to 0 then you'll
+have to do your own C<use vars> in your package.
+
 =back
+
+=head1 DETAILED EXPLANATION
+
+Keeps changing too much once it stops changing so much, I'll write this.
 
 =head1 SEE ALSO
 

@@ -65,7 +65,9 @@ is_deeply(
 		))
 	},
 	{
-		a => [
+		a => [],
+		TAGS =>
+		[
 			'b', [qw( a b :c )],
 			'e', [qw( e f g )],
 		]
@@ -85,7 +87,9 @@ is_deeply(
 		))
 	},
 	{
-		a => [
+		a => [],
+		TAGS =>
+		[
 			'b', [],
 			'e', [qw( e f :g )],
 			'd' => ['a'],
@@ -110,7 +114,7 @@ use Exporter::Easiest q(
 use vars qw( @EXPORT @EXPORT_OK %EXPORT_TAGS );
 
 ::ok(::eq_set( \@EXPORT, [ qw( e_1 e_2)] ), "use EXPORT and TAGS");
-::ok(::eq_set( \@EXPORT_OK ,[qw( e_1 e_2 a b c d e f o_1 o_2 )] ), "use OK with EXPORT and TAGS"
+::ok(::eq_set( \@EXPORT_OK ,[qw( a b c d e f o_1 o_2 )] ), "use OK with EXPORT and TAGS"
 );
 
 my %e = %EXPORT_TAGS;

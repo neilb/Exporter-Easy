@@ -1,0 +1,16 @@
+0.2
+
+No longer need to use TAGS in Easiest
+
+Added ISA control
+
+No longer including EXPORT in EXPORT_OK
+
+Added OK_ONLY, which means only these symbols go in EXPORT_OK
+
+Added VARS control. Now no longer need to explicitly use vars for exportable
+variables
+
+0.1
+
+initial release
