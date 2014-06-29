@@ -129,7 +129,12 @@ not significant, all the parsing logic revolves around the use of ':'s and
 
 =head1 SEE ALSO
 
-For the real details on exporting symbols see Exporter and Exporter::Easy
+For the real details on exporting symbols see L<Exporter>
+and L<Exporter::Easy>.
+
+=head1 REPOSITORY
+
+L<https://github.com/neilbowers/Exporter-Easy>
 
 =head1 AUTHOR
 

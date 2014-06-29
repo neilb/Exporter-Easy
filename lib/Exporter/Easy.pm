@@ -444,6 +444,10 @@ L<Class::Exporter> lets you export class methods as regular subroutines.
 
 L<Xporter> is like Exporter, but with persistent defaults and auto-ISA.
 
+=head1 REPOSITORY
+
+L<https://github.com/neilbowers/Exporter-Easy>
+
 =head1 AUTHOR
 
 Written by Fergal Daly <fergal@esatclear.ie>.

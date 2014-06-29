@@ -6,6 +6,7 @@ Revision history for Perl module Exporter::Easy
     - Added a load of alternative Exporter modules to SEE ALSO
     - Decided to do a developer release first, given there are 16 dists on
       CPAN that use this dist.
+    - Added github repo to pods.
 
 0.16 2004-08-03 FDALY
 
