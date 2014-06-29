@@ -1,55 +1,51 @@
-0.16
+Revision history for Perl module Exporter::Easy
 
-Fixed Exporter::Easiest so that it automatically does the use vars, the
-problem was that I was not using the magic goto so the vars were being used
-in the wrong package.
+0.17 2014-06-29
+    - Renamed CHANGES to Changes and reformatted as per CPAN::Changes::Spec
 
-Factored out some code in the vars tests.
+0.16 2004-08-03 FDALY
 
-0.15
+    - Fixed Exporter::Easiest so that it automatically does the use vars,
+      the problem was that I was not using the magic goto so the vars were
+      being used in the wrong package.
+    - Factored out some code in the vars tests.
 
-changed the processing order and documented it
+0.15 2003-02-25 FDALY
 
-FAIL symbols are now added to EXPORT_OK
+    - changed the processing order and documented it
+    - FAIL symbols are now added to EXPORT_OK
+    - Fixed bug, ":" now is anchored to start of string for tag detection
+     is Easiest
+    - Optimised expand_tags a little by specialising the add/delete code
+      for the tag and non-tag cases.
 
-Fixed bug, ":" now is anchored to start of string for tag detection is Easiest
+0.14 2003-02-13 FDALY
 
-Optimised expand_tags a little by specialising the add/delete code for the
-tag and non-tag cases.
+    - some slight optimistaions
+    - no longer subtracting the FAIL from OK
+    - more helpful errors messages
+    - added benchmark
 
-0.14
+0.13 2003-02-13 FDALY
 
-some slight optimistaions
+    - I should have fixed Easiest to work with ALL as weel as VARS and ISA,
+      done now
+    - Doc fixes
 
-no longer subtracting the FAIL from OK
+0.12 2003-02-13 FDALY
 
-more helpful errors messages
+    - Fixed Easiest to handle scalar values for VARS and ISA
 
-added benchmark
+0.11 2003-02-13 FDALY
 
-0.13
+    - No longer need to use TAGS in Easiest
+    - Added ISA control
+    - No longer including EXPORT in EXPORT_OK
+    - Added OK_ONLY, which means only these symbols go in EXPORT_OK
+    - Added VARS control. Now no longer need to explicitly use vars
+      for exportable variables
 
-I should have fixed Easiest to work with ALL as weel as VARS and ISA, done now
+0.1 2003-02-12 FDALY
 
-Doc fixes
+    - initial release
 
-0.12
-
-Fixed Easiest to handle scalar values for VARS and ISA
-
-0.11
-
-No longer need to use TAGS in Easiest
-
-Added ISA control
-
-No longer including EXPORT in EXPORT_OK
-
-Added OK_ONLY, which means only these symbols go in EXPORT_OK
-
-Added VARS control. Now no longer need to explicitly use vars for exportable
-variables
-
-0.1
-
-initial release
