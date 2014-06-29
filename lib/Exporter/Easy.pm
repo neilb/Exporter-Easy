@@ -1,16 +1,12 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easy.pm,v 1.24 2003/02/14 16:53:20 fergal Exp $
-
-use strict;
-
 package Exporter::Easy;
 
-require 5.006;
+use 5.006;
+use strict;
+use warnings;
 
 require Exporter;
-
 use vars;
 
-our $VERSION = '0.16';
 
 sub import
 {

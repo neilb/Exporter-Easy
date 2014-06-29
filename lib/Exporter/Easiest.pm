@@ -1,12 +1,10 @@
-# $Header: /home/fergal/my/cvs/Exporter-Easy/lib/Exporter/Easiest.pm,v 1.5 2003/02/13 13:09:15 fergal Exp $
-# Be lean.
-use strict;
-no strict 'refs';
-
 package Exporter::Easiest;
 
-require 5.006;
+use 5.006;
+use strict;
+use warnings;
 
+no strict 'refs';
 require Exporter::Easy;
 
 sub import
