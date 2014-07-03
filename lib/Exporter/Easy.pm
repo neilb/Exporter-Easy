@@ -265,7 +265,8 @@ In other files which wish to use YourModule:
 
 =head1 DESCRIPTION
 
-Exporter::Easy makes using Exporter easy. In it's simplest case it allows
+Exporter::Easy makes using Exporter easy.
+In its simplest case, it allows
 you to drop the boilerplate code that comes with using Exporter, so
 
   require Exporter;
