@@ -134,7 +134,7 @@ and L<Exporter::Easy>.
 
 =head1 REPOSITORY
 
-L<https://github.com/neilbowers/Exporter-Easy>
+L<https://github.com/neilb/Exporter-Easy>
 
 =head1 AUTHOR
 

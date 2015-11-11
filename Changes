@@ -1,5 +1,8 @@
 Revision history for Perl module Exporter::Easy
 
+0.18 2015-10-12 NEILB
+    - Updated github repo URL after changing my github username
+
 0.17 2014-07-03 NEILB
     - Switched to Dist::Zilla, in the process fixing RT#40987
     - Added a load of alternative Exporter modules to SEE ALSO
